@@ -59,25 +59,22 @@ def getStochastic(dailyCloses, period):
 	res = 100 * (df['dailyCloses'] - lows) / (highs - lows)
 	return res
 
-def getATR(dailyCloses, lows, highs, period):
+def getATR(dailyCloses, highs, lows, period):
 	#h-l
 	#h-pc
 	#l-pc
 	
-	df = pd.DataFrame({'dailyCloses':dailyCloses, 'lows':lows, highs:'highs'})
+	df = pd.DataFrame({'dailyCloses':dailyCloses, 'lows':lows, 'highs':highs})
 	df['H-L'] = abs(df['highs']-df['lows'])
 	df['H-PC'] = abs(df['highs']-df['dailyCloses'].shift(1))
 	df['L-PC'] = abs(df['lows']-df['dailyCloses'].shift(1))
 	TR = df[['H-L','H-PC','L-PC']]
 	
-	averages = pd.DataFrame.rolling(TR, period).mean(axis=1)
-	
-	return TR.to_frame()
+	TR['mean'] = TR.mean(axis=1)
+	return TR['mean']
 	
 if __name__ == "__main__":
 	parsedData = parseData(sys.argv[1])
-
-	print(parsedData[0])
 	
 	RSIperiod = 14
 	stoPeriod = 14
