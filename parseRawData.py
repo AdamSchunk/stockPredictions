@@ -12,7 +12,6 @@ import pandas as pd
 
 def parseData(rawFileLocation):
 	data = pd.read_csv(rawFileLocation)
-	data.head()
 	dailyCloses = data["Adj Close"]
 	dailyGain = [j-i if j-i > 0 else 0 for i, j in zip(dailyCloses[:-1], dailyCloses[1:])]
 	dailyLoss = [(j-i)*-1 if j-i < 0 else 0 for i, j in zip(dailyCloses[:-1], dailyCloses[1:])]
@@ -22,10 +21,15 @@ def parseData(rawFileLocation):
 	parsedData = np.array(list(zip(dailyCloses[1:],dailyGain, dailyLoss, dailyHigh, dailyLow)))
 	return parsedData
 	
-	
+	'''
+	computes RSI by calculating the daily loss and daily gain averages
+	over a period of time. The first n datapoints where n = period are
+	ignored in the dataset to build up the correct averages.
+	padding is added to the front of the returned set to keep sizes consistent.
+	'''
 def getRSI(parsedData, period):
 
-	RSI = []
+	RSI = [np.nan]*period
 	dailyGain = parsedData[:,1]
 	dailyLoss = parsedData[:,2]
 	prevAG = sum(dailyGain[0:period])/period
@@ -42,6 +46,8 @@ def getRSI(parsedData, period):
 		
 	return np.array(RSI)
 	
+	
+	
 def getMACD(dailyCloses, period1 = 12, period2 = 26, signal = 9):
 	df = pd.DataFrame({'dailyCloses':dailyCloses})
 	EMA1 = pd.DataFrame.ewm(df["dailyCloses"],span=period1).mean()
@@ -49,7 +55,7 @@ def getMACD(dailyCloses, period1 = 12, period2 = 26, signal = 9):
 	MACD = EMA1-EMA2
 
 	Signal = pd.DataFrame.ewm(MACD,signal).mean()
-	
+	#print(MACD)
 	return MACD - Signal
 	
 def getStochastic(dailyCloses, period):
@@ -89,15 +95,26 @@ if __name__ == "__main__":
 	trueRange = getATR(dailyCloses, highs, lows, atrRange)
 	
 	print(len(dailyCloses))
-	print(len(RSI)) #starts after RSIperiod
-	print(len(MACD))
+	print(len(RSI)) #padding until RSIperiod
+	print(len(MACD)) #full
 	print(len(stochastic)) # nan stoPeriod at front
-	print(len(trueRange))
+	print(len(trueRange)) # first entry invalid
+	#print(len(target)) #last entry padding
 	
-	res = np.array(list(zip(dailyCloses,RSI,MACD)))
+	features = pd.DataFrame({'dailyCloses':dailyCloses})
+	features['RSI'] = RSI
+	features['MACD'] = MACD
+	features['Stochastic'] = stochastic
+	features['ATR'] = trueRange
+	features = (features - features.mean()) / (features.max() - features.min())
+	features['Target'] = features['dailyCloses']
 	
-	x_normed = (res - res.mean(0)) / res.ptp(0)
-	#print(x_normed)
+	features = features.dropna()
 	
+
+	print(features)
+	
+	
+	features.to_csv(sys.argv[2], index=False)
 	
 	
