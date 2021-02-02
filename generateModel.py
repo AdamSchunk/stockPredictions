@@ -15,9 +15,9 @@ data = pd.read_csv(sys.argv[1])
 X = data[['dailyCloses', 'RSI', 'MACD', 'Stochastic', 'ATR']]
 Y = data[['Target']]
 
-numEpochs = 100
-trainTimeSteps = 100
-predictTimeSteps = 30
+numEpochs = 1000
+trainTimeSteps = 200
+predictTimeSteps = 100
 numSamples, numFeatures = X.shape
 
 X = X.as_matrix()
@@ -37,7 +37,7 @@ model.compile(loss='logcosh', optimizer='adam')
 
 
 performance = model.fit(trainX, trainY, epochs=numEpochs, batch_size=1)
-model.save('100E_100TsT_30TsP.h5')
+model.save('1000E_200TsT_100TsP.h5')
 
 #plt.figure()
 #plt.plot(performance.history['loss'])
